@@ -6,8 +6,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
+
 @RestController
 @RequestMapping("/journals")
+@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*",
+        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.OPTIONS})
 public class JournalController {
 
     @Autowired
