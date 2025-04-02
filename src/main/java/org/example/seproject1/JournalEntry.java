@@ -1,25 +1,28 @@
 package org.example.seproject1;
 
 import org.springframework.data.annotation.Id;
-import java.util.Date;
+import java.util.*;
+
 
 public class JournalEntry {
-
     @Id
     private String id;
-
-    private String type; // Type of journal (AI or Manual)
-    private String content; // Journal text
-    private String imageUrl; // URL of the image (if any)
-    private String mood; // Mood tag (e.g., Happy, Sad, etc.)
-    private Date date; // Date of the journal entry
-    private Date time; // Time of the journal entry
-    private Date createdAt; // Timestamp of when the entry was created
-    private String privacy; // "public" or "private"
+    private String userId; // Add this field to associate with user
+    private String type;
+    private String content;
+    private String imageUrl;
+    private String mood;
+    private Date date;
+    private Date time;
+    private Date createdAt;
+    private String privacy;
+    private List<String> tags; // Add this if you need tags
 
     // Getters and Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
     public String getContent() { return content; }
@@ -36,4 +39,6 @@ public class JournalEntry {
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
     public String getPrivacy() { return privacy; }
     public void setPrivacy(String privacy) { this.privacy = privacy; }
+    public List<String> getTags() { return tags; }
+    public void setTags(List<String> tags) { this.tags = tags; }
 }

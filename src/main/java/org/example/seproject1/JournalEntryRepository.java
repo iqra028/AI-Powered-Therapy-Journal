@@ -6,16 +6,9 @@ import java.util.List;
 
 @Repository
 public interface JournalEntryRepository extends MongoRepository<JournalEntry, String> {
-
-    // Find all journal entries by type (AI or Manual)
-    List<JournalEntry> findByType(String type);
-
-    // Find all journal entries by mood (Happy, Sad, etc.)
-    List<JournalEntry> findByMood(String mood);
-
-    // Find all journal entries ordered by creation date (Newest first)
-    List<JournalEntry> findAllByOrderByCreatedAtDesc();
-
-    // Find all public journal entries (assuming a 'privacy' field exists in JournalEntry)
-    List<JournalEntry> findByPrivacy(String privacy);
+    List<JournalEntry> findByUserId(String userId);
+    List<JournalEntry> findByUserIdAndType(String userId, String type);
+    List<JournalEntry> findByUserIdAndMood(String userId, String mood);
+    List<JournalEntry> findByUserIdOrderByCreatedAtDesc(String userId);
+    List<JournalEntry> findByUserIdAndPrivacy(String userId, String privacy);
 }
