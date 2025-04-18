@@ -48,53 +48,82 @@ public class GeminiService {
 
     public String detectMood(String text) {
         System.out.println("Detecting mood for text: " + text); // Debugging
-        String prompt = "Analyze the following text and determine the primary mood expressed. Choose only one from this list: Happy, Sad, Angry, Anxious, Excited, Tired, Neutral.\nText: " + text;
-        String response = callGeminiAPI(prompt);
 
-        // Extract the mood from the response
+        // Create a specific prompt for Gemini to determine the mood
+        String prompt = "Analyze the following journal entry and determine the primary mood expressed. " +
+                "Choose exactly one mood from this list: " + String.join(", ", MOODS) + ". " +
+                "Return only the mood name, nothing else.\n\nJournal entry: " + text;
+
+        String response = callGeminiAPI(prompt);
+        System.out.println("Gemini mood response: " + response); // Debugging
+
+        // Process the response to extract just the mood
+        String detectedMood = "Neutral"; // Default mood
+
+        // Clean up the response
+        String cleanResponse = response.trim();
+
+        // Check for exact mood names in the response
         for (String mood : MOODS) {
-            if (response.contains(mood)) {
-                System.out.println("Detected mood: " + mood); // Debugging
-                return mood;
+            if (cleanResponse.equalsIgnoreCase(mood) ||
+                    cleanResponse.contains(mood) ||
+                    response.contains(mood)) {
+                detectedMood = mood;
+                break;
             }
         }
 
-        System.out.println("Default mood: Neutral"); // Debugging
-        return "Neutral"; // Default mood
+        System.out.println("Final detected mood: " + detectedMood); // Debugging
+        return detectedMood;
     }
 
     public List<String> extractTags(String text) {
         System.out.println("Extracting tags for text: " + text); // Debugging
-        String prompt = "Extract 2-5 relevant tags from the following text. Choose from common categories like Work, Family, Health, Relationships, Personal, Goals, Achievements, Challenges, Travel, Hobbies, Education, or suggest other relevant tags.\nText: " + text;
+
+        // Create a specific prompt for Gemini to extract the most relevant tags
+        String prompt = "Analyze the following journal entry and select exactly 3 tags that best represent its content. " +
+                "Choose only from this list: " + String.join(", ", COMMON_TAGS) + ". " +
+                "Return only the tag names separated by commas, with no additional text or explanation.\n\nJournal entry: " + text;
+
         String response = callGeminiAPI(prompt);
+        System.out.println("Gemini tag response: " + response); // Debugging
 
         List<String> extractedTags = new ArrayList<>();
 
-        // Extract tags using regex
-        Pattern pattern = Pattern.compile("\\b(" + String.join("|", COMMON_TAGS) + ")\\b", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(response);
-
-        while (matcher.find() && extractedTags.size() < 5) {
-            String tag = matcher.group(1);
-            if (!extractedTags.contains(tag)) {
-                extractedTags.add(tag);
+        // Process the response - splitting by commas and trimming whitespace
+        String[] tagCandidates = response.split(",");
+        for (String tag : tagCandidates) {
+            String trimmedTag = tag.trim();
+            // Verify the tag is in our allowed list
+            if (COMMON_TAGS.contains(trimmedTag) && !extractedTags.contains(trimmedTag) && extractedTags.size() < 3) {
+                extractedTags.add(trimmedTag);
             }
         }
 
-        // If we didn't find enough tags, look for other words that might be tags
-        if (extractedTags.size() < 2) {
-            pattern = Pattern.compile("\\b([A-Z][a-z]{2,})\\b");
-            matcher = pattern.matcher(response);
+        // Fallback if we didn't get valid tags
+        if (extractedTags.isEmpty()) {
+            // Extract tags using regex as a backup method
+            Pattern pattern = Pattern.compile("\\b(" + String.join("|", COMMON_TAGS) + ")\\b", Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(response);
 
-            while (matcher.find() && extractedTags.size() < 5) {
+            while (matcher.find() && extractedTags.size() < 3) {
                 String tag = matcher.group(1);
-                if (!extractedTags.contains(tag) && !MOODS.contains(tag)) {
-                    extractedTags.add(tag);
+                // Find the exact case match in our COMMON_TAGS list
+                for (String commonTag : COMMON_TAGS) {
+                    if (commonTag.equalsIgnoreCase(tag) && !extractedTags.contains(commonTag)) {
+                        extractedTags.add(commonTag);
+                        break;
+                    }
                 }
             }
         }
 
-        System.out.println("Extracted tags: " + extractedTags); // Debugging
+        // If still empty, add a default tag
+        if (extractedTags.isEmpty()) {
+            extractedTags.add("Personal");
+        }
+
+        System.out.println("Final extracted tags: " + extractedTags); // Debugging
         return extractedTags;
     }
 

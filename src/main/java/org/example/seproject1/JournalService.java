@@ -2,9 +2,17 @@ package org.example.seproject1;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
 import java.util.List;
 import java.util.Optional;
-
+@RestController
+@RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*",
+        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS})
 @Service
 public class JournalService {
     @Autowired

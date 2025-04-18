@@ -62,11 +62,13 @@ public class GeminiController {
             String type = (String) request.getOrDefault("type", "AI");
             String privacy = (String) request.getOrDefault("privacy", "private");
 
-            // Detect tags if not provided
+            // Extract tags using Gemini AI
             List<String> tags;
-            if (request.containsKey("tags")) {
+            if (request.containsKey("tags") && ((List<String>) request.get("tags")).size() > 0) {
+                // Use provided tags if available
                 tags = (List<String>) request.get("tags");
             } else {
+                // Use AI to extract tags
                 tags = geminiService.extractTags(content);
             }
 
@@ -82,6 +84,9 @@ public class GeminiController {
 
             // Save to database
             JournalEntry savedEntry = journalService.saveJournalEntry(entry);
+
+            // Save tags (this depends on your database schema - you might need additional code here)
+            // This is a placeholder for tag saving logic
 
             // Prepare response
             Map<String, Object> response = new HashMap<>();
@@ -131,6 +136,50 @@ public class GeminiController {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "Failed to update summary: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+        @PostMapping("/extract-tags")
+    public ResponseEntity<Map<String, Object>> extractTags(@RequestBody Map<String, String> request) {
+        try {
+            String content = request.get("content");
+            if (content == null || content.trim().isEmpty()) {
+                throw new IllegalArgumentException("Content cannot be empty");
+            }
+
+            List<String> tags = geminiService.extractTags(content);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("tags", tags);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Failed to extract tags: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+    @PostMapping("/detect-mood")
+    public ResponseEntity<Map<String, String>> detectMood(@RequestBody Map<String, String> request) {
+        try {
+            String text = request.get("content");
+            if (text == null || text.trim().isEmpty()) {
+                throw new IllegalArgumentException("Content cannot be empty");
+            }
+
+            String mood = geminiService.detectMood(text);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("success", "true");
+            response.put("mood", mood);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("success", "false");
+            errorResponse.put("message", "Failed to detect mood: " + e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
