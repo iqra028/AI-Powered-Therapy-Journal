@@ -93,4 +93,24 @@ public class AdminController {
         Optional<Admin> admin = adminService.getAdminById(adminId);
         return admin.isPresent();
     }
+    // Add these methods to AdminController
+    @GetMapping("/pending-profiles")
+    public ResponseEntity<?> getPendingProfiles(@RequestHeader("Authorization") String token) {
+        if (!isValidAdminToken(token)) {
+            return ResponseEntity.status(403).body(Map.of("error", "Unauthorized access"));
+        }
+        List<Profile> profiles = therapistService.getPendingProfiles();
+        return ResponseEntity.ok(profiles);
+    }
+
+    @PostMapping("/approve-profile/{profileId}")
+    public ResponseEntity<?> approveProfile(
+            @RequestHeader("Authorization") String token,
+            @PathVariable String profileId) {
+        if (!isValidAdminToken(token)) {
+            return ResponseEntity.status(403).body(Map.of("error", "Unauthorized access"));
+        }
+        Profile approvedProfile = therapistService.approveProfile(profileId);
+        return ResponseEntity.ok(approvedProfile);
+    }
 }

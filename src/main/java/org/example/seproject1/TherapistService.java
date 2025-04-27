@@ -12,6 +12,8 @@ public class TherapistService {
 
     @Autowired
     private TherapistRepository therapistRepository;
+    @Autowired
+    private ProfileRepository profileRepository;
 
     // Register a new therapist
     public Therapist registerTherapist(Therapist therapist) {
@@ -57,5 +59,27 @@ public class TherapistService {
     // Delete a therapist
     public void deleteTherapist(String id) {
         therapistRepository.deleteById(id);
+    }
+    public Profile createProfile(String therapistId, Profile profile) {
+        profile.setTherapistId(therapistId);
+        profile.setApproved(false); // Needs admin approval
+        profile.setRating(0);
+        profile.setReviewCount(0);
+        return profileRepository.save(profile);
+    }
+
+    public Optional<Profile> getProfileByTherapistId(String therapistId) {
+        return profileRepository.findByTherapistId(therapistId);
+    }
+
+    public List<Profile> getPendingProfiles() {
+        return profileRepository.findByApproved(false);
+    }
+
+    public Profile approveProfile(String profileId) {
+        Profile profile = profileRepository.findById(profileId)
+                .orElseThrow(() -> new RuntimeException("Profile not found"));
+        profile.setApproved(true);
+        return profileRepository.save(profile);
     }
 }

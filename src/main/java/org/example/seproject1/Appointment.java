@@ -1,78 +1,49 @@
 package org.example.seproject1;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
-
+@Document(collection = "appointments")
 public class Appointment {
+    @Id
     private String id;
-    private String userId;
+    private String clientId;
     private String therapistId;
-    private LocalDateTime appointmentTime;
-    private String status; // "Pending", "Confirmed", "Cancelled", "Completed"
+    private String clientName;
+    private String therapistName;
+    private String date;  // YYYY-MM-DD format
+    private String time;  // HH:MM format
     private String notes;
-    private LocalDateTime createdAt;
+    private String status; // SCHEDULED, COMPLETED, CANCELLED
 
-    public Appointment() {
-        this.createdAt = LocalDateTime.now();
-    }
+    // Constructors
+    public Appointment() {}
 
     // Getters and setters
-    public String getId() {
-        return id;
-    }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    public String getClientId() { return clientId; }
+    public void setClientId(String clientId) { this.clientId = clientId; }
 
-    public String getUserId() {
-        return userId;
-    }
+    public String getTherapistId() { return therapistId; }
+    public void setTherapistId(String therapistId) { this.therapistId = therapistId; }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
+    public String getClientName() { return clientName; }
+    public void setClientName(String clientName) { this.clientName = clientName; }
 
-    public String getTherapistId() {
-        return therapistId;
-    }
+    public String getTherapistName() { return therapistName; }
+    public void setTherapistName(String therapistName) { this.therapistName = therapistName; }
 
-    public void setTherapistId(String therapistId) {
-        this.therapistId = therapistId;
-    }
+    public String getDate() { return date; }
+    public void setDate(String date) { this.date = date; }
 
-    public LocalDateTime getAppointmentTime() {
-        return appointmentTime;
-    }
+    public String getTime() { return time; }
+    public void setTime(String time) { this.time = time; }
 
-    public void setAppointmentTime(LocalDateTime appointmentTime) {
-        this.appointmentTime = appointmentTime;
-    }
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }
-
