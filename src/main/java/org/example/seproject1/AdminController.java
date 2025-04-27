@@ -113,4 +113,14 @@ public class AdminController {
         Profile approvedProfile = therapistService.approveProfile(profileId);
         return ResponseEntity.ok(approvedProfile);
     }
+    @PostMapping("/reject-profile/{profileId}")
+    public ResponseEntity<?> rejectProfile(
+            @RequestHeader("Authorization") String token,
+            @PathVariable String profileId) {
+        if (!isValidAdminToken(token)) {
+            return ResponseEntity.status(403).body(Map.of("error", "Unauthorized access"));
+        }
+        therapistService.rejectProfile(profileId);
+        return ResponseEntity.ok(Map.of("message", "Profile rejected successfully"));
+    }
 }

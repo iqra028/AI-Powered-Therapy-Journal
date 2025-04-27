@@ -127,4 +127,43 @@ public class TherapistController {
                     .body(Map.of("error", "Error marking day as unavailable: " + e.getMessage()));
         }
     }
+    // Add this to TherapistController.java
+    @PostMapping("/mark-time-unavailable")
+    public ResponseEntity<?> markTimeUnavailable(
+            @RequestHeader("Authorization") String token,
+            @RequestBody Map<String, String> payload) {
+        try {
+            String therapistId = extractTherapistIdFromToken(token);
+            String date = payload.get("date");
+            String time = payload.get("time");
+            boolean allDay = Boolean.parseBoolean(payload.get("allDay"));
+
+            if (date == null || date.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Date is required"));
+            }
+
+            if (!allDay && (time == null || time.isEmpty())) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Time is required for specific time slots"));
+            }
+
+            // Check if appointments exist for this time slot
+            List<Appointment> existingAppointments = appointmentRepository.findByTherapistIdAndDateAndTime(
+                    therapistId, date, time);
+            if (!existingAppointments.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Cannot mark time as unavailable: you have an existing appointment"));
+            }
+
+            // Create new unavailable slot
+            UnavailableSlot unavailableSlot = allDay ?
+                    new UnavailableSlot(therapistId, date, true) :
+                    new UnavailableSlot(therapistId, date, time);
+            unavailableSlotRepository.save(unavailableSlot);
+
+            return ResponseEntity.ok(Map.of("message", "Time slot marked as unavailable successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error marking time as unavailable: " + e.getMessage()));
+        }
+    }
 }

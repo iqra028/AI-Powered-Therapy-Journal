@@ -82,4 +82,8 @@ public class TherapistService {
         profile.setApproved(true);
         return profileRepository.save(profile);
     }
+
+    public void rejectProfile(String profileId) {
+        profileRepository.deleteById(profileId);
+    }
 }
