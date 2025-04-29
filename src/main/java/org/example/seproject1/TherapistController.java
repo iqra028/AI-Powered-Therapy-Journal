@@ -5,10 +5,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/therapist")
@@ -23,25 +21,7 @@ public class TherapistController {
     @Autowired
     private AppointmentRepository appointmentRepository;
     @GetMapping("/profile")
-    public ResponseEntity<?> getTherapistProfile(@RequestHeader("Authorization") String token) {
-        try {
-            String therapistId = extractTherapistIdFromToken(token);
-            Optional<Therapist> therapist = therapistService.getTherapistById(therapistId);
 
-            if (therapist.isPresent()) {
-                // Also check if profile exists
-
-                Optional<Profile> profile = profileRepository.findByTherapistId(therapistId);
-                Map<String, Object> response = new HashMap<>();
-                response.put("therapist", therapist.get());
-                response.put("profile", profile.orElse(null));
-                return ResponseEntity.ok(response);
-            }
-            return ResponseEntity.status(404).body(Map.of("error", "Therapist not found"));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("error", "Server error: " + e.getMessage()));
-        }
-    }
     // Update therapist profile
     @PutMapping("/profile")
     public ResponseEntity<?> updateTherapistProfile(
@@ -84,18 +64,6 @@ public class TherapistController {
     @Autowired
     private UnavailableSlotRepository unavailableSlotRepository;
 
-    // Get all unavailable slots for a therapist
-    @GetMapping("/unavailable-slots")
-    public ResponseEntity<?> getUnavailableSlots(@RequestHeader("Authorization") String token) {
-        try {
-            String therapistId = extractTherapistIdFromToken(token);
-            List<UnavailableSlot> unavailableSlots = unavailableSlotRepository.findByTherapistId(therapistId);
-            return ResponseEntity.ok(unavailableSlots);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error retrieving unavailable slots: " + e.getMessage()));
-        }
-    }
 
     // Mark a day as unavailable
     @PostMapping("/mark-day-unavailable")
@@ -164,6 +132,103 @@ public class TherapistController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error marking time as unavailable: " + e.getMessage()));
+        }
+    }
+    @GetMapping("/available-slots")
+    public ResponseEntity<?> getAvailableSlots(
+            @RequestHeader("Authorization") String token,
+            @RequestParam String date) {
+        try {
+            String therapistId = extractTherapistIdFromToken(token);
+
+            // Get all unavailable slots for this therapist and date
+            List<UnavailableSlot> unavailableSlots = unavailableSlotRepository.findByTherapistIdAndDate(therapistId, date);
+
+            // Check if there's an all-day unavailable slot
+            boolean isAllDayUnavailable = unavailableSlots.stream()
+                    .anyMatch(UnavailableSlot::isAllDay);
+
+            if (isAllDayUnavailable) {
+                return ResponseEntity.ok(Collections.emptyList());
+            }
+
+            // Generate all possible time slots (9am-5pm for example)
+            List<String> allSlots = generateTimeSlots();
+
+            // Filter out unavailable slots
+            List<String> availableSlots = allSlots.stream()
+                    .filter(slot -> unavailableSlots.stream()
+                            .noneMatch(unavailable -> slot.equals(unavailable.getTimeSlot())))
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(availableSlots);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error retrieving available slots: " + e.getMessage()));
+        }
+    }
+
+    private List<String> generateTimeSlots() {
+        List<String> slots = new ArrayList<>();
+        for (int hour = 9; hour < 18; hour++) {
+            slots.add(String.format("%02d:00", hour));
+        }
+        return slots;
+    }
+    @GetMapping("/profile/{id}")
+    public ResponseEntity<?> getTherapistProfile(@RequestParam String id) {
+        try {
+            Optional<Therapist> therapist = therapistService.getTherapistById(id);
+            Optional<Profile> profile = profileRepository.findByTherapistId(id);
+
+            if (therapist.isPresent() && profile.isPresent()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("therapist", therapist.get());
+                response.put("profile", profile.get());
+                return ResponseEntity.ok(response);
+            }
+            return ResponseEntity.status(404).body(Map.of("error", "Therapist not found"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Server error: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/unavailable-slots")
+    public ResponseEntity<?> getUnavailableSlots(@RequestParam String therapistId) {
+        try {
+            List<UnavailableSlot> unavailableSlots = unavailableSlotRepository.findByTherapistId(therapistId);
+            return ResponseEntity.ok(unavailableSlots);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error retrieving unavailable slots: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{therapistId}/appointments")
+    public ResponseEntity<?> addTherapistAppointment(
+            @PathVariable String therapistId,
+            @RequestBody Map<String, String> payload) {
+        try {
+            String appointmentId = payload.get("appointmentId");
+
+            Optional<Therapist> therapistOptional = therapistService.getTherapistById(therapistId);
+            if (!therapistOptional.isPresent()) {
+                return ResponseEntity.status(404).body(Map.of("error", "Therapist not found"));
+            }
+
+            Therapist therapist = therapistOptional.get();
+            List<String> appointments = therapist.getAppointments();
+            if (appointments == null) {
+                appointments = new ArrayList<>();
+            }
+            appointments.add(appointmentId);
+            therapist.setAppointments(appointments);
+            therapistService.registerTherapist(therapist);
+
+            return ResponseEntity.ok(Map.of("message", "Appointment added to therapist"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error updating therapist: " + e.getMessage()));
         }
     }
 }

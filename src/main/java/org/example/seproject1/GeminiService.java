@@ -179,4 +179,47 @@ public class GeminiService {
             return "No response from Gemini AI.";
         }
     }
+    public String generateWeeklySummary(List<JournalEntry> entries) {
+        if (entries == null || entries.isEmpty()) {
+            return getRandomQuote();
+        }
+
+        // Prepare data for analysis
+        StringBuilder journalData = new StringBuilder();
+        Map<String, Integer> moodCounts = new HashMap<>();
+        Set<String> commonThemes = new HashSet<>();
+
+        for (JournalEntry entry : entries) {
+            journalData.append(entry.getContent()).append("\n\n");
+            moodCounts.merge(entry.getMood(), 1, Integer::sum);
+
+            // Extract themes from content (simplified example)
+            if (entry.getContent().toLowerCase().contains("work")) commonThemes.add("Work");
+            if (entry.getContent().toLowerCase().contains("family")) commonThemes.add("Family");
+            // Add more theme detection as needed
+        }
+
+        String prompt = "Analyze the following weekly journal entries and provide a concise summary (3-4 paragraphs). " +
+                "Focus on:\n" +
+                "1. Overall mood trends (most common moods: " + moodCounts.toString() + ")\n" +
+                "2. Key themes that emerged (" + String.join(", ", commonThemes) + ")\n" +
+                "3. Notable changes or patterns in mood/content\n" +
+                "4. Any apparent concerns or positive developments\n" +
+                "Write in a supportive, conversational tone as if advising a friend.\n\n" +
+                "Journal Entries:\n" + journalData.toString();
+
+        return callGeminiAPI(prompt);
+    }
+
+    private String getRandomQuote() {
+        List<String> quotes = Arrays.asList(
+                "The only way to do great work is to love what you do. - Steve Jobs",
+                "You are never too old to set another goal or to dream a new dream. - C.S. Lewis",
+                "Believe you can and you're halfway there. - Theodore Roosevelt",
+                "It does not matter how slowly you go as long as you do not stop. - Confucius",
+                "Success is not final, failure is not fatal: It is the courage to continue that counts. - Winston Churchill"
+        );
+        return "No journal entries this week. Here's a quote for you:\n\n" +
+                quotes.get(new Random().nextInt(quotes.size()));
+    }
 }

@@ -1,6 +1,7 @@
 package org.example.seproject1;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
@@ -181,6 +182,27 @@ public class GeminiController {
             errorResponse.put("success", "false");
             errorResponse.put("message", "Failed to detect mood: " + e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+    @GetMapping("/weekly-summary")
+    public ResponseEntity<Map<String, String>> getWeeklySummary(@RequestParam String userId) {
+        try {
+            // Get entries from the past week
+            Calendar calendar = Calendar.getInstance();
+            calendar.add(Calendar.DAY_OF_YEAR, -7);
+            Date oneWeekAgo = calendar.getTime();
+
+            List<JournalEntry> entries = journalService.getEntriesSince(userId, oneWeekAgo);
+
+            String summary = geminiService.generateWeeklySummary(entries);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("summary", summary);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to generate summary: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 }

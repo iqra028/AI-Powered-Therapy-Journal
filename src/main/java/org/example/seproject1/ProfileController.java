@@ -180,4 +180,16 @@ public class ProfileController {
                     .body("Error checking profile status: " + e.getMessage());
         }
     }
+    // Add this to your ProfileController.java
+    @GetMapping("/approved-profiles")
+    public ResponseEntity<?> getApprovedProfiles() {
+        try {
+            List<Profile> approvedProfiles = profileRepository.findByApproved(true);
+            return ResponseEntity.ok(approvedProfiles);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving approved profiles: " + e.getMessage());
+        }
+    }
+
 }

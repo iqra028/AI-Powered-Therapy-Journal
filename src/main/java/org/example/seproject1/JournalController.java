@@ -16,28 +16,7 @@ public class JournalController {
     @Autowired
     private JournalService journalService;
 
-    @PostMapping
-    public JournalEntry createJournal(
-            @RequestHeader("Authorization") String token,
-            @RequestBody JournalEntry entry) {
 
-        // Extract userId from token
-        String userId = token.replace("Bearer ", "").replace("user-auth-", "");
-
-        // Set userId and timestamps
-        entry.setUserId(userId);
-        entry.setCreatedAt(new Date());
-
-        // If date/time not provided, set to current time
-        if (entry.getDate() == null) {
-            entry.setDate(new Date());
-        }
-        if (entry.getTime() == null) {
-            entry.setTime(new Date());
-        }
-
-        return journalService.saveJournalEntry(entry);
-    }
 
     @GetMapping("/{id}")
     public ResponseEntity<JournalEntry> getJournalById(
@@ -110,5 +89,108 @@ public class JournalController {
 
         return ResponseEntity.notFound().build();
     }
+    @GetMapping("/public")
+    public List<JournalEntry> getPublicJournals() {
+        return journalService.getPublicJournals();
+    }
+
+    @GetMapping("/pending")
+    public List<JournalEntry> getPendingJournals(@RequestHeader("Authorization") String token) {
+        // Add admin check here if needed
+        return journalService.getPendingJournals();
+    }
+
+    @PostMapping("/{id}/like")
+    public JournalEntry likeJournal(
+            @RequestHeader("Authorization") String token,
+            @PathVariable String id) {
+        String userId = extractUserIdFromToken(token);
+        return journalService.likeJournal(id, userId);
+    }
+
+    @PutMapping("/{id}/privacy")
+    public JournalEntry changePrivacy(
+            @RequestHeader("Authorization") String token,
+            @PathVariable String id,
+            @RequestParam String privacy) {
+        String userId = extractUserIdFromToken(token);
+        JournalEntry updatedEntry = journalService.changePrivacy(id, privacy, userId);
+
+        // Add notification logic if needed
+        return updatedEntry;
+    }
+    @PutMapping("/{id}/approve")
+    public JournalEntry approveJournal(
+            @RequestHeader("Authorization") String token,
+            @PathVariable String id) {
+        // Add admin check here
+        return journalService.approveJournal(id);
+    }
+
+    @PutMapping("/{id}/reject")
+    public JournalEntry rejectJournal(
+            @RequestHeader("Authorization") String token,
+            @PathVariable String id) {
+        // Add admin check here
+        return journalService.rejectJournal(id);
+    }
+
+    @PostMapping
+    public JournalEntry createJournal(
+            @RequestHeader("Authorization") String token,
+            @RequestBody JournalEntry entry) {
+
+        String userId = extractUserIdFromToken(token);
+        entry.setUserId(userId);
+        entry.setAuthorName("User " + userId.substring(0, 4)); // Default name - replace with actual user name
+        entry.setCreatedAt(new Date());
+
+        if (entry.getDate() == null) entry.setDate(new Date());
+        if (entry.getTime() == null) entry.setTime(new Date());
+        if (entry.getPrivacy() == null) entry.setPrivacy("private");
+
+        // Modified logic for status
+        if ("public".equals(entry.getPrivacy())) {
+            entry.setStatus("pending"); // Set to pending instead of public
+        } else {
+            entry.setStatus("draft");
+        }
+
+        return journalService.saveJournalEntry(entry);
+    }
+    // Add to JournalController.java
+
+    @GetMapping("/api/admin/pending-journals")
+    public ResponseEntity<List<JournalEntry>> getPendingJournalsAdmin(
+            @RequestHeader("Authorization") String token) {
+        // Optional: Add admin verification logic here
+        String userId = extractUserIdFromToken(token);
+        // In a real app, you would check if this userId has admin role
+
+        return ResponseEntity.ok(journalService.getPendingJournals());
+    }
+
+    @PutMapping("/api/admin/approve-journal/{id}")
+    public ResponseEntity<JournalEntry> approveJournalAdmin(
+            @RequestHeader("Authorization") String token,
+            @PathVariable String id) {
+        // Optional: Add admin verification
+        String userId = extractUserIdFromToken(token);
+        // In a real app, you would check if this userId has admin role
+
+        return ResponseEntity.ok(journalService.approveJournal(id));
+    }
+
+    @PutMapping("/api/admin/reject-journal/{id}")
+    public ResponseEntity<JournalEntry> rejectJournalAdmin(
+            @RequestHeader("Authorization") String token,
+            @PathVariable String id) {
+        // Optional: Add admin verification
+        String userId = extractUserIdFromToken(token);
+        // In a real app, you would check if this userId has admin role
+
+        return ResponseEntity.ok(journalService.rejectJournal(id));
+    }
+
 
 }
