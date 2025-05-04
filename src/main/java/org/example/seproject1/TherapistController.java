@@ -175,6 +175,7 @@ public class TherapistController {
         }
         return slots;
     }
+
     @GetMapping("/profile/{id}")
     public ResponseEntity<?> getTherapistProfile(@RequestParam String id) {
         try {

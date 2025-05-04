@@ -3,6 +3,8 @@ package org.example.seproject1;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.*;
+
 @Document(collection = "profiles")
 public class Profile {
     @Id
@@ -17,7 +19,8 @@ public class Profile {
     private String[] availableSlots;
     private boolean approved;
     private double rating;
-    private int reviewCount;
+    private long reviewCount;
+    private List<Feedback> feedbacks = new ArrayList<>();
 
     // Constructors, getters, and setters
     public Profile() {}
@@ -43,8 +46,55 @@ public class Profile {
     public void setAvailableSlots(String[] availableSlots) { this.availableSlots = availableSlots; }
     public boolean isApproved() { return approved; }
     public void setApproved(boolean approved) { this.approved = approved; }
-    public double getRating() { return rating; }
-    public void setRating(double rating) { this.rating = rating; }
-    public int getReviewCount() { return reviewCount; }
     public void setReviewCount(int reviewCount) { this.reviewCount = reviewCount; }
+
+
+    public void setFeedbacks(List<Feedback> feedbacks) {
+        this.feedbacks = feedbacks;
+    }
+
+
+
+    private void calculateRating() {
+        if (feedbacks.isEmpty()) {
+            this.rating = 0;
+            this.reviewCount = 0;
+            return;
+        }
+
+        double sum = feedbacks.stream().mapToDouble(Feedback::getRating).sum();
+        this.rating = sum / feedbacks.size();
+        this.reviewCount = feedbacks.size();
+    }
+    public void addFeedback(Feedback feedback) {
+        this.feedbacks.add(feedback);
+
+        // Recalculate rating
+        if (feedback.getRating() > 0) {
+            double total = feedbacks.stream()
+                    .mapToInt(Feedback::getRating)
+                    .sum();
+            this.rating = total / feedbacks.size();
+            this.reviewCount = feedbacks.size();
+        }
+    }
+
+    public List<Feedback> getFeedbacks() {
+        return feedbacks;
+    }
+    public double getRating() {
+        return rating;
+    }
+
+    public void setRating(double rating) {
+        this.rating = rating;
+    }
+
+    public long getReviewCount() {
+        return reviewCount;
+    }
+
+    public void setReviewCount(long reviewCount) {
+        this.reviewCount = reviewCount;
+    }
 }

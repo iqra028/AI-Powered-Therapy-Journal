@@ -11,4 +11,5 @@ public interface ProfileRepository extends MongoRepository<Profile, String> {
     Optional<Profile> findByTherapistId(String therapistId);
     List<Profile> findByApproved(boolean approved);
 
+
 }
