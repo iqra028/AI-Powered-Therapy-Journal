@@ -6,7 +6,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/journals")
@@ -15,7 +17,8 @@ import java.util.Optional;
 public class JournalController {
     @Autowired
     private JournalService journalService;
-
+    @Autowired
+    private UserRepository userRepository;
 
 
     @GetMapping("/{id}")
@@ -92,12 +95,6 @@ public class JournalController {
     @GetMapping("/public")
     public List<JournalEntry> getPublicJournals() {
         return journalService.getPublicJournals();
-    }
-
-    @GetMapping("/pending")
-    public List<JournalEntry> getPendingJournals(@RequestHeader("Authorization") String token) {
-        // Add admin check here if needed
-        return journalService.getPendingJournals();
     }
 
     @PostMapping("/{id}/like")
@@ -190,6 +187,10 @@ public class JournalController {
         // In a real app, you would check if this userId has admin role
 
         return ResponseEntity.ok(journalService.rejectJournal(id));
+    }
+    @GetMapping("/pending")
+    public List<JournalEntry> getPendingJournals(@RequestHeader("Authorization") String token) {
+        return journalService.getPendingJournalsWithUsernames();
     }
 
 

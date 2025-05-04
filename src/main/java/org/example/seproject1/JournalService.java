@@ -21,6 +21,8 @@ import java.util.Optional;
 public class JournalService {
     @Autowired
     private JournalEntryRepository journalEntryRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     public JournalEntry saveJournalEntry(JournalEntry entry) {
         return journalEntryRepository.save(entry);
@@ -128,5 +130,15 @@ public class JournalService {
     }
     public List<JournalEntry> getEntriesSince(String userId, Date date) {
         return journalEntryRepository.findByUserIdAndDateAfter(userId, date);
+    }
+    public List<JournalEntry> getPendingJournalsWithUsernames() {
+        List<JournalEntry> pendingJournals = journalEntryRepository.findByStatusIn(List.of("pending", "draft"));
+
+        for (JournalEntry journal : pendingJournals) {
+            Optional<User> user = userRepository.findById(journal.getUserId());
+            journal.setAuthorName(user.map(User::getUsername).orElse("Unknown User"));
+        }
+
+        return pendingJournals;
     }
 }

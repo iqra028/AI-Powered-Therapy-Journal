@@ -91,6 +91,65 @@ public class AppointmentController {
         }
     }
 
+    /**
+     * Updates the status of an appointment
+     * @param appointmentId The ID of the appointment to update
+     * @param payload The updated status information
+     * @return ResponseEntity with the updated appointment or an error message
+     */
+    @PutMapping("/{appointmentId}/status")
+    public ResponseEntity<?> updateAppointmentStatus(
+            @PathVariable String appointmentId,
+            @RequestBody Map<String, String> payload) {
+
+        try {
+            String status = payload.get("status");
+            if (status == null || status.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Status is required"));
+            }
+
+            Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
+            if (!appointmentOpt.isPresent()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Appointment appointment = appointmentOpt.get();
+            appointment.setStatus(status.toUpperCase());
+            Appointment updatedAppointment = appointmentRepository.save(appointment);
+
+            // Notify client via email if needed
+            // sendAppointmentStatusUpdateNotification(appointment.getClientEmail(), status, appointment.getDate(), appointment.getTime());
+
+            return ResponseEntity.ok(updatedAppointment);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error updating appointment status: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get all appointments - can be filtered by status
+     */
+    @GetMapping
+    public ResponseEntity<?> getAllAppointments(@RequestParam(required = false) String status) {
+        try {
+            List<Appointment> appointments;
+            if (status != null && !status.isEmpty()) {
+                // Add findByStatus method to AppointmentRepository
+                // appointments = appointmentRepository.findByStatus(status.toUpperCase());
+                // For now, we'll filter manually
+                appointments = appointmentRepository.findAll();
+                appointments.removeIf(appointment -> !status.equalsIgnoreCase(appointment.getStatus()));
+            } else {
+                appointments = appointmentRepository.findAll();
+            }
+            return ResponseEntity.ok(appointments);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error retrieving appointments: " + e.getMessage()));
+        }
+    }
+
     private void sendAppointmentNotification(String therapistEmail, String clientName,
                                              String date, String time, String notes) {
         try {

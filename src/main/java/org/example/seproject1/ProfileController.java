@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-
 @RestController
 @RequestMapping("/api/therapist")
 @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*",
@@ -22,7 +21,10 @@ public class ProfileController {
     @Autowired
     private FeedbackRepository feedbackRepository;
 
-
+    @RequestMapping(value = "/admin/profiles/{profileId}", method = RequestMethod.OPTIONS)
+    public ResponseEntity<?> handleOptions() {
+        return ResponseEntity.ok().build();
+    }
     // Create or update profile with token-based authentication
     @PostMapping("/profile")
     public ResponseEntity<?> createProfile(@RequestBody ProfileDTO profileDTO, @RequestHeader("Authorization") String token) {
@@ -79,7 +81,7 @@ public class ProfileController {
     }
 
     // Admin endpoint to approve or reject profiles
-    @PatchMapping("/admin/profiles/{profileId}")
+    @PostMapping ("/admin/profiles/{profileId}")
     public ResponseEntity<?> updateApprovalStatus(
             @PathVariable String profileId,
             @RequestBody Map<String, Boolean> payload,
