@@ -79,6 +79,20 @@ public class ProfileController {
                     .body("Error retrieving profile: " + e.getMessage());
         }
     }
+    @GetMapping("/profile-by-id/{profileId}")
+    public ResponseEntity<?> getProfileById(@PathVariable String profileId) {
+        try {
+            Optional<Profile> profile = profileRepository.findById(profileId);
+            if (profile.isPresent()) {
+                return ResponseEntity.ok(profile.get());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Profile not found");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving profile: " + e.getMessage());
+        }
+    }
 
     // Admin endpoint to approve or reject profiles
     @PostMapping ("/admin/profiles/{profileId}")
